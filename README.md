@@ -9,66 +9,30 @@ Be part of the global effort, it is opportunity for us to contribute our knowled
 The next step is to let everyone know their carbon foot print of the power grids they are using such that they can leverage the Google smart home devices etc. to minimise net Carbon emission. 
 
 ## Architecture
-![image](https://user-images.githubusercontent.com/11746291/120589268-972ba580-c406-11eb-8614-6a9b0f717fc8.png)
+![image](https://user-images.githubusercontent.com/11746291/120592450-e7f1cd00-c40b-11eb-9f40-1bc4bc56343e.png)
 
 ## USE CASE
 For a recent project I needed to find an efficient way to extract data from API’s and load the response into a database residing in the cloud. As many of the energy and environment related Platforms are going online and expose their data services as APIs, the following use case is used for this project 
-1. Google Cloud Serverless Function periodically calls API and saves JSON data file to storage bucket via cloud scheduler. 
-2. BigQuery Data Transfer service automatically picks up  and loads .json files into the database table via the Pub/Sub triggeres.
+1. Google Cloud Serverless Function periodically calls API and saves JSON data file to storage bucket via cloud scheduler. In the project, the serverless function is triggered by a Pub/Sub topic and periodically published messages using by Cloud Scheduler. 
+2. BigQuery Data Transfer service automatically picks up  and loads .json files into the BigQuery database table.
 
 ## Serverless Function
 
 ![image](https://user-images.githubusercontent.com/11746291/120590542-ac093880-c408-11eb-90ed-35d5b8d08d64.png)
 
-1. main.py
----------------------------------------------------------------------------------------------------------------
-import base64
-import requests 
-import json 
-import google.cloud 
-from requests.auth import HTTPBasicAuth
-from datetime import date, timedelta
-from google.cloud import storage
-
-def get_watttimes_data():
-  login_url = 'https://api2.watttime.org/v2/login'
-  token = requests.get(login_url, auth=HTTPBasicAuth('yourid', 'yourpassword')).json()['token']
-  data_url = 'https://api2.watttime.org/v2/data'
-  headers = {'Authorization': 'Bearer {}'.format(token)}
-  params = {'ba': 'CAISO_ZP26', 
-          'starttime': '2019-01-20T16:00:00-0800', 
-          'endtime': '2019-02-20T16:15:00-0800'}
-  rsp = requests.get(data_url, headers=headers, params=params)
-  results = json.loads(rsp.text) 
-  return (results)
-
-def fetch_and_writeto_gcpstorage():
-  #ction = base64.b64decode(data['data']).decode('utf-8') # retrieve pubsub message
-    # ...
-  storage_client=storage.Client()
-  yesterday = date.today() - timedelta(1)
-  yesterday = str(yesterday) [:10]
-  #if (action == "download!"): # work is conditional on message content
-  parsed=get_watttimes_data()
-  payload = '\n'.join(json.dumps(item) for item in parsed)
-  file_name = "wattimedata_{}.json".format(yesterday.replace("-", ""))
-  storage_client.get_bucket("gcf-sources-json-us-central1") \
-    .blob(file_name) \
-    .upload_from_string(payload)
-
-fetch_and_writeto_gcpstorage()
-
-2. requirments.txt
----------------------------------------------------------------------------------------------------------------
-google-cloud
-google-cloud-bigquery
-google-cloud-storage
+![image](https://user-images.githubusercontent.com/11746291/120591717-9eed4900-c40a-11eb-8ca7-00920cb08a9c.png)
 
 ## Cloud Scheduler
+![image](https://user-images.githubusercontent.com/11746291/120591936-fb506880-c40a-11eb-8047-8c2af1fd5df9.png)
 
+## Cloud Storage
+![image](https://user-images.githubusercontent.com/11746291/120592231-80d41880-c40b-11eb-9afa-9a98c1d29aa3.png)
 
+## BigQuery Data Transfer Service
+![image](https://user-images.githubusercontent.com/11746291/120592729-559df900-c40c-11eb-9191-d180e42674b5.png)
 
-### [Checkout The Step-By-Step Tutorial](https://towardsdatascience.com/deploy-to-google-cloud-run-using-github-actions-590ecf957af0)
+## BigQuery Dataset and Table
+![image](https://user-images.githubusercontent.com/11746291/120593170-17eda000-c40d-11eb-8651-004ffdfef218.png)
 
 ## Set Up
 In order to deploy this project on your own you just need to take the following steps.
